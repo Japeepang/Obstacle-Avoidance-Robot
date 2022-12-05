@@ -1,0 +1,236 @@
+#include <Servo.h>          
+#include <NewPing.h>
+#include <avr/io.h>
+#include <util/delay.h>       
+
+// const int LeftMotorForward = 5;
+// const int LeftMotorBackward = 4;
+// const int RightMotorForward = 3;
+// const int RightMotorBackward = 2;
+
+//sensor pins
+#define trig_pin A1 //analog input 1
+#define echo_pin A2 //analog input 2
+
+// int LED1 = 8;
+// int LED2 = 9; 
+// int LED3 = 10; 
+
+
+boolean goesForward = false;
+int distance = 100;
+
+NewPing sonar(trig_pin, echo_pin, distance); //sensor function
+Servo servo_motor; //our servo name
+
+
+void setup(){
+
+ DDRD |= ((1 << 2) | (1 << 3) | (1 << 4) | (1 << 5));
+ DDRB |= ((1 << 8) | (1 << 9) | (1 << 10));  
+  // pinMode(RightMotorForward, OUTPUT);
+  // pinMode(LeftMotorForward, OUTPUT);
+  // pinMode(LeftMotorBackward, OUTPUT);
+  // pinMode(RightMotorBackward, OUTPUT);
+  // pinMode(LED1, OUTPUT);
+  // pinMode(LED2, OUTPUT);
+  // pinMode(LED3, OUTPUT);
+  
+  servo_motor.attach(11); //our servo pin
+
+  servo_motor.write(90);
+  delay(2000);
+  distance = readPing();
+  delay(100);
+  distance = readPing();
+  delay(100);
+  distance = readPing();
+  delay(100);
+  distance = readPing();
+  delay(100);
+}
+
+void loop(){
+  
+  // digitalWrite(LED1, LOW);
+  // digitalWrite(LED2, LOW);
+  // digitalWrite(LED3, LOW);
+  PORTB &= ~((1 << 8) | (1 << 9) | (1 << 10));
+  
+  int distanceRight = 0;
+  int distanceLeft = 0;
+  delay(50);
+
+
+  
+  if (distance <= 20){
+    moveStop();
+    delay(300);
+    moveBackward();
+    delay(400);
+    moveStop();
+    delay(300);
+    distanceRight = lookRight();
+    delay(300);
+    distanceLeft = lookLeft();
+    delay(300);
+
+    if (distance >= distanceLeft){
+      measure_distance();
+      // digitalWrite(LED1, HIGH);
+      PORTB |= (1 << 8);
+      turnRight();
+      moveStop();
+      
+    }
+    else{
+      measure_distance();
+      // digitalWrite(LED3, HIGH);
+      PORTB |= (1 << 10);
+      turnLeft();
+      moveStop();
+      
+    
+    }
+  }
+  if(distance <= 40){
+    measure_distance();
+    // digitalWrite(LED2, HIGH);
+    PORTB |= (1 << 9);
+    moveForward();
+    
+    }
+  else{
+    measure_distance();
+    moveBackward();
+        
+  }
+    measure_distance();
+    distance = readPing();
+    
+    
+    Serial.begin(9600);
+}
+
+int lookRight(){  
+  servo_motor.write(10);
+  delay(500);
+  int distance = readPing();
+  delay(100);
+  servo_motor.write(90);
+  return distance;
+}
+
+int lookLeft(){
+  servo_motor.write(170);
+  delay(500);
+  int distance = readPing();
+  delay(100);
+  servo_motor.write(90);
+  return distance;
+  delay(100);
+}
+
+int readPing(){
+  delay(70);
+  int cm = sonar.ping_cm();
+  if (cm==0){
+    cm=250;
+  }
+  return cm;
+}
+
+void moveStop(){
+  
+  // digitalWrite(RightMotorForward, LOW);
+  // digitalWrite(LeftMotorForward, LOW);
+  // digitalWrite(RightMotorBackward, LOW);
+  // digitalWrite(LeftMotorBackward, LOW);
+  PORTD &= ~((1 << 2) | (1 << 3) | (1 << 4) | (1 << 5));
+}
+
+void moveForward(){
+
+  if(!goesForward){
+
+    goesForward=true;
+    
+    PORTD |= ((1 << 5) | (1 << 3));
+    PORTD &= ~((1 << 4) | (1 << 2)); 
+    // digitalWrite(LeftMotorForward, HIGH);
+    // digitalWrite(RightMotorForward, HIGH);
+  
+    // digitalWrite(LeftMotorBackward, LOW);
+    // digitalWrite(RightMotorBackward, LOW); 
+  }
+}
+
+void moveBackward(){
+
+  goesForward=false;
+
+  PORTD &= ~((1 << 4) | (1 << 2)); 
+  PORTD |= ((1 << 5) | (1 << 3));
+  // digitalWrite(LeftMotorBackward, LOW);
+  // digitalWrite(RightMotorBackward, LOW);
+  
+  // digitalWrite(LeftMotorForward, HIGH);
+  // digitalWrite(RightMotorForward, HIGH);
+  
+}
+
+void turnRight(){
+
+  PORTD |= ((1 << 5) | (1 << 2));
+  PORTD &= ~((1 << 3) | (1 << 4));
+  // digitalWrite(LeftMotorForward, HIGH);
+  // digitalWrite(RightMotorBackward, HIGH);
+  
+  // digitalWrite(LeftMotorBackward, LOW);
+  // digitalWrite(RightMotorForward, LOW);
+  
+  delay(500);
+  
+  PORTD |= ((1 << 5) | (1 << 3));
+  PORTD &= ~((1 << 2) | (1 << 4));
+  // digitalWrite(LeftMotorForward, HIGH);
+  // digitalWrite(RightMotorForward, HIGH);
+  
+  // digitalWrite(LeftMotorBackward, LOW);
+  // digitalWrite(RightMotorBackward, LOW);
+ 
+  
+  
+}
+
+void turnLeft(){
+  
+  PORTD |= ((1 << 3) | (1 << 4));
+  PORTD &= ~((1 << 2) | (1 << 5));
+  // digitalWrite(LeftMotorBackward, HIGH);
+  // digitalWrite(RightMotorForward, HIGH);
+  
+  // digitalWrite(LeftMotorForward, LOW);
+  // digitalWrite(RightMotorBackward, LOW);
+
+  delay(500);
+  
+  PORTD |= ((1 << 5) | (1 << 3));
+  PORTD &= ~((1 << 2) | (1 << 4));
+//   digitalWrite(LeftMotorForward, HIGH);
+//   digitalWrite(RightMotorForward, HIGH);
+  
+//   digitalWrite(LeftMotorBackward, LOW);
+//   digitalWrite(RightMotorBackward, LOW);
+// }
+
+
+void measure_distance(){
+    Serial.print("Distance (cm) : ");
+    Serial.println(distance); 
+    Serial.print("Distance: ");
+    Serial.print(distance);
+    Serial.print("\tTime of Flight(uS/cm) : ");
+    Serial.println(distance * (2 * 29));
+
+}
